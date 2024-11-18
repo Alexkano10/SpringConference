@@ -1,74 +1,60 @@
-/*
-
 package io.bcn.springConference.view;
 
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Route;
+import io.bcn.springConference.model.Conference;
+import io.bcn.springConference.repository.ConferenceRepository;
+import com.vaadin.flow.component.datepicker.DatePicker;
 
-
-@Route("/conference")
+@Route("conferences")
 public class ConferenceView extends VerticalLayout {
 
+    private final ConferenceRepository conferenceRepository;
+    private final Grid<Conference> grid = new Grid<>(Conference.class);
+    private DatePicker datePicker;  // Declarar datePicker como atributo de la clase
 
-
-    private final TextField name = new TextField("Name");
-    private final TextField email = new TextField("Email");
-    private final TextField phoneNumber = new TextField("Phone Number");
-    private final Button save = new Button("Save");
-    private final Button delete = new Button("Delete");
-
-
-
-
-    // Method to create the main layout
-    private Component createMainLayout() {
-        // Create the 3-column layout
-        HorizontalLayout mainLayout = new HorizontalLayout();
-        mainLayout.setSizeFull();
-        mainLayout.setPadding(false);
-        mainLayout.setSpacing(false);
-
-        // Left column (empty for spacing)
-        VerticalLayout leftColumn = new VerticalLayout();
-        leftColumn.setWidth("20%");
-
-        // Center column (contains all the components)
-        VerticalLayout centerColumn = new VerticalLayout();
-        centerColumn.setWidth("60%");
-        centerColumn.setAlignItems(Alignment.CENTER);
-
-        // Right column (empty for spacing)
-        VerticalLayout rightColumn = new VerticalLayout();
-        rightColumn.setWidth("20%");
-
-        // Create a form layout
-        HorizontalLayout formLayout = new HorizontalLayout(name, email, phoneNumber);
-        formLayout.setWidth("100%");
-        formLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-
-        // Create a button layout
-        HorizontalLayout buttonLayout = new HorizontalLayout(save, delete);
-        buttonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-
-        // Add components to the center column
-        centerColumn.add(
-                new H2("Customer Management"),
-                formLayout,
-                buttonLayout
-        );
-
-        // Add all columns to the main layout
-        mainLayout.add(leftColumn, centerColumn, rightColumn);
-
-        return mainLayout;
+    public ConferenceView(ConferenceRepository conferenceRepository) {
+        this.conferenceRepository = conferenceRepository;
+        createDatePicker();  // Crear el DatePicker
+        configureGrid();
+        add(datePicker, grid);  // Añadir el DatePicker y el grid
+        updateList();  // Inicializar el listado de conferencias
     }
 
+    // Crear el DatePicker y configurar su comportamiento
+    private void createDatePicker() {
+        datePicker = new DatePicker("Select a Date");  // Asignar el DatePicker a la variable de clase
+        datePicker.addValueChangeListener(event -> updateList());  // Filtrar cuando se selecciona una fecha
+    }
+
+    private void configureGrid() {
+        // Configuración de las columnas del Grid
+        grid.setColumns("id", "date", "linkToYoutubeVideo", "title", "conferenceName", "content", "duration", "room", "book", "speaker");
+
+        // Personalización de los encabezados de columna
+        grid.getColumnByKey("id").setHeader("ID");
+        grid.getColumnByKey("date").setHeader("Date");
+        grid.getColumnByKey("linkToYoutubeVideo").setHeader("YouTube Video Link");
+        grid.getColumnByKey("title").setHeader("Title");
+        grid.getColumnByKey("conferenceName").setHeader("Conference Name");
+        grid.getColumnByKey("content").setHeader("Content");
+        grid.getColumnByKey("duration").setHeader("Duration");
+        grid.getColumnByKey("room").setHeader("Room");
+        grid.getColumnByKey("book").setHeader("Book ID");
+        grid.getColumnByKey("speaker").setHeader("Speaker ID");
+
+        grid.setHeight("400px");
+    }
+
+    // Método para actualizar la lista de conferencias
+    private void updateList() {
+        if (datePicker.getValue() != null) {
+            // Filtrar conferencias por la fecha seleccionada en el DatePicker
+            grid.setItems(conferenceRepository.findByDate(datePicker.getValue()));
+        } else {
+            // Si no hay fecha seleccionada, mostrar todas las conferencias
+            grid.setItems(conferenceRepository.findAll());
+        }
+    }
 }
-*/

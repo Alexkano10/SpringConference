@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
+
+import java.util.List;
 import java.util.UUID;
 
 
@@ -31,9 +33,9 @@ public class Book {
     @Column(nullable = false)
     private String author;
 
-    @Column(nullable = false, unique = true)
-    private String ISBN;
+    @Column(name = "isbn", nullable = false, unique = true)
+    private String isbn;
 
-/*    @OneToMany(mappedBy = "book")
-    private List<Conference> conferences;*/
+  @OneToMany(mappedBy = "book")
+    private List<Conference> conferences;
 }

@@ -1,0 +1,185 @@
+package io.bcn.springConference.view;
+
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentEvent;
+import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.BeanValidationBinder;
+import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.shared.Registration;
+import io.bcn.springConference.model.Book;
+import io.bcn.springConference.model.Conference;
+import io.bcn.springConference.model.Speaker;
+
+import java.util.List;
+
+public class ConferenceForm extends FormLayout {
+    private Conference conference;
+
+    // Form fields
+    private DatePicker date = new DatePicker("Conference Date");
+    private TextField linkToYoutubeVideo = new TextField("YouTube Video Link");
+    private TextField title = new TextField("Conference Title");
+    private TextField conferenceName = new TextField("Conference Name");
+    private TextArea content = new TextArea("Content");
+    private IntegerField duration = new IntegerField("Duration (minutes)");
+    private TextField room = new TextField("Room");
+    private ComboBox<Book> book = new ComboBox<>("Book");
+    private ComboBox<Speaker> speaker = new ComboBox<>("Speaker");
+
+    private Button save = new Button("Save");
+    private Button delete = new Button("Delete");
+    private Button close = new Button("Cancel");
+
+    private Binder<Conference> binder = new BeanValidationBinder<>(Conference.class);
+
+    public ConferenceForm(List<Book> books, List<Speaker> speakers) {
+        addClassName("conference-form");
+
+        // Configure ComboBoxes
+        configureComboBoxes(books, speakers);
+
+        // Configure required fields
+        configureRequiredFields();
+
+        // Bind form fields
+        binder.bindInstanceFields(this);
+
+        // Add components to form
+        add(
+                date,
+                linkToYoutubeVideo,
+                title,
+                conferenceName,
+                content,
+                duration,
+                room,
+                book,
+                speaker,
+                createButtonsLayout()
+        );
+    }
+
+    private void configureComboBoxes(List<Book> books, List<Speaker> speakers) {
+        book.setItems(books);
+        book.setItemLabelGenerator(Book::getTitle);
+        book.setRequired(true);
+
+        speaker.setItems(speakers);
+        speaker.setItemLabelGenerator(Speaker::getName);
+        speaker.setRequired(true);
+    }
+
+    private void configureRequiredFields() {
+        // Configurar campos como obligatorios
+        date.setRequired(true);
+        title.setRequired(true);
+        conferenceName.setRequired(true);
+        duration.setRequired(true);
+        room.setRequired(true);
+    }
+
+    private Component createButtonsLayout() {
+        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        delete.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        close.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        save.addClickShortcut(Key.ENTER);
+        close.addClickShortcut(Key.ESCAPE);
+
+        save.addClickListener(event -> validateAndSave());
+        delete.addClickListener(event -> fireEvent(new DeleteEvent(this, conference)));
+        close.addClickListener(event -> fireEvent(new CloseEvent(this)));
+
+        return new HorizontalLayout(save, delete, close);
+    }
+
+    public void setConference(Conference conference) {
+        this.conference = conference;
+        binder.readBean(conference);
+
+        // Establecer valores de ComboBox si existen
+        if (conference != null) {
+            book.setValue(conference.getBook());
+            speaker.setValue(conference.getSpeaker());
+        }
+    }
+
+    private void validateAndSave() {
+        try {
+            if (!binder.validate().isOk()) {
+                Notification.show("Por favor, complete todos los campos obligatorios");
+                return;
+            }
+
+            // Obtener el objeto Conference del Binder
+            Conference conference = binder.getBean();
+            if (conference == null) {
+                conference = new Conference();
+            }
+
+            // Asignar valores manualmente
+            conference.setBook(book.getValue());
+            conference.setSpeaker(speaker.getValue());
+
+            fireEvent(new SaveEvent(this, conference));
+        } catch (Exception e) {
+            Notification.show("Error al guardar: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Métodos de eventos (sin cambios)
+    public static abstract class ConferenceFormEvent extends ComponentEvent<ConferenceForm> {
+        private Conference conference;
+
+        protected ConferenceFormEvent(ConferenceForm source, Conference conference) {
+            super(source, false);
+            this.conference = conference;
+        }
+
+        public Conference getConference() {
+            return conference;
+        }
+    }
+
+    public static class SaveEvent extends ConferenceFormEvent {
+        SaveEvent(ConferenceForm source, Conference conference) {
+            super(source, conference);
+        }
+    }
+
+    public static class DeleteEvent extends ConferenceFormEvent {
+        DeleteEvent(ConferenceForm source, Conference conference) {
+            super(source, conference);
+        }
+    }
+
+    public static class CloseEvent extends ConferenceFormEvent {
+        CloseEvent(ConferenceForm source) {
+            super(source, null);
+        }
+    }
+
+    public Registration addSaveListener(ComponentEventListener<SaveEvent> listener) {
+        return addListener(SaveEvent.class, listener);
+    }
+
+    public Registration addDeleteListener(ComponentEventListener<DeleteEvent> listener) {
+        return addListener(DeleteEvent.class, listener);
+    }
+
+    public Registration addCloseListener(ComponentEventListener<CloseEvent> listener) {
+        return addListener(CloseEvent.class, listener);
+    }
+}

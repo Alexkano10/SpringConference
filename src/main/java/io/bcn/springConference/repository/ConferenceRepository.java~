@@ -2,17 +2,11 @@ package io.bcn.springConference.repository;
 
 import io.bcn.springConference.model.Conference;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-@Repository
 public interface ConferenceRepository extends JpaRepository<Conference, UUID> {
-    // Find conferences by date
     List<Conference> findByDate(LocalDate date);
-
-    // Find conferences by conference name (case-insensitive)
-    List<Conference> findByConferenceNameContainingIgnoreCase(String conferenceName);
 }
